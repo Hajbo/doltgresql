@@ -424,19 +424,7 @@ func plusOverflow(val1 int64, val2 int64) (any, error) {
 }
 
 // date_pl_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var date_pl_interval = framework.Function2{
-	Name:       "date_pl_interval",
-	Return:     pgtypes.Timestamp,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Date, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		date := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Add the interval to the date using the existing helper function
-		return intervalPlusNonInterval(interval, date)
-	},
-}
+var date_pl_interval = datetimeIntervalOperator("date_pl_interval", pgtypes.Date, pgtypes.Timestamp, false)
 
 // date_pli represents the PostgreSQL function of the same name, taking the same parameters.
 var date_pli = framework.Function2{
@@ -546,34 +534,10 @@ var timetzdate_pl = framework.Function2{
 }
 
 // timestamp_pl_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var timestamp_pl_interval = framework.Function2{
-	Name:       "timestamp_pl_interval",
-	Return:     pgtypes.Timestamp,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Timestamp, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		timestamp := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Add the interval to the timestamp using the existing helper function
-		return intervalPlusNonInterval(interval, timestamp)
-	},
-}
+var timestamp_pl_interval = datetimeIntervalOperator("timestamp_pl_interval", pgtypes.Timestamp, pgtypes.Timestamp, false)
 
 // timestamptz_pl_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var timestamptz_pl_interval = framework.Function2{
-	Name:       "timestamptz_pl_interval",
-	Return:     pgtypes.TimestampTZ,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TimestampTZ, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		timestamptz := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Add the interval to the timestamptz using the existing helper function
-		return intervalPlusNonInterval(interval, timestamptz)
-	},
-}
+var timestamptz_pl_interval = datetimeIntervalOperator("timestamptz_pl_interval", pgtypes.TimestampTZ, pgtypes.TimestampTZ, false)
 
 // time_pl_interval represents the PostgreSQL function of the same name, taking the same parameters.
 var time_pl_interval = framework.Function2{
@@ -600,6 +564,24 @@ var timetz_pl_interval = framework.Function2{
 		timetzVal.TimeOfDay = timetzVal.TimeOfDay.Add(interval)
 		return timetzVal, nil
 	},
+}
+
+// datetimeIntervalOperator returns an operator function that adds the interval on the right to the date, timestamp or
+// timestamptz value on the left, or subtracts it when subtract is true.
+func datetimeIntervalOperator(name string, left *pgtypes.DoltgresType, ret *pgtypes.DoltgresType, subtract bool) framework.Function2 {
+	return framework.Function2{
+		Name:       name,
+		Return:     ret,
+		Parameters: [2]*pgtypes.DoltgresType{left, pgtypes.Interval},
+		Strict:     true,
+		Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
+			interval := val2.(duration.Duration)
+			if subtract {
+				interval = interval.Mul(-1)
+			}
+			return intervalPlusNonInterval(interval, val1.(time.Time))
+		},
+	}
 }
 
 // intervalPlusNonInterval adds given interval duration to the given time.Time value.

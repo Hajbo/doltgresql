@@ -288,19 +288,7 @@ var date_mii = framework.Function2{
 }
 
 // date_mi_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var date_mi_interval = framework.Function2{
-	Name:       "date_mi_interval",
-	Return:     pgtypes.Timestamp,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Date, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		date := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Subtract the interval from the date
-		return intervalPlusNonInterval(interval.Mul(-1), date)
-	},
-}
+var date_mi_interval = datetimeIntervalOperator("date_mi_interval", pgtypes.Date, pgtypes.Timestamp, true)
 
 // timestamptz_mi represents the PostgreSQL function of the same name, taking the same parameters.
 var timestamptz_mi = framework.Function2{
@@ -319,19 +307,7 @@ var timestamptz_mi = framework.Function2{
 }
 
 // timestamptz_mi_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var timestamptz_mi_interval = framework.Function2{
-	Name:       "timestamptz_mi_interval",
-	Return:     pgtypes.TimestampTZ,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.TimestampTZ, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		timestamptz := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Subtract the interval from the timestamptz
-		return intervalPlusNonInterval(interval.Mul(-1), timestamptz)
-	},
-}
+var timestamptz_mi_interval = datetimeIntervalOperator("timestamptz_mi_interval", pgtypes.TimestampTZ, pgtypes.TimestampTZ, true)
 
 // timestamp_mi represents the PostgreSQL function of the same name, taking the same parameters.
 var timestamp_mi = framework.Function2{
@@ -350,19 +326,7 @@ var timestamp_mi = framework.Function2{
 }
 
 // timestamp_mi_interval represents the PostgreSQL function of the same name, taking the same parameters.
-var timestamp_mi_interval = framework.Function2{
-	Name:       "timestamp_mi_interval",
-	Return:     pgtypes.Timestamp,
-	Parameters: [2]*pgtypes.DoltgresType{pgtypes.Timestamp, pgtypes.Interval},
-	Strict:     true,
-	Callable: func(ctx *sql.Context, _ [3]*pgtypes.DoltgresType, val1 any, val2 any) (any, error) {
-		timestamp := val1.(time.Time)
-		interval := val2.(duration.Duration)
-
-		// Subtract the interval from the timestamp
-		return intervalPlusNonInterval(interval.Mul(-1), timestamp)
-	},
-}
+var timestamp_mi_interval = datetimeIntervalOperator("timestamp_mi_interval", pgtypes.Timestamp, pgtypes.Timestamp, true)
 
 // time_mi_time represents the PostgreSQL function of the same name, taking the same parameters.
 var time_mi_time = framework.Function2{
